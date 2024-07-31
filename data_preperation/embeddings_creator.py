@@ -25,6 +25,9 @@ def create_embeddings_esm2(df, model_index):
     if len(sys.argv) < 2:
         raise ValueError("Model index not provided. Usage: python embeddings_creator.py <model_index>")
 
+    # Get the model index from command-line arguments
+    model_index = int(sys.argv[1])
+
     # Validate model index
     if model_index < 0 or model_index >= len(esm2_model_names):
         raise ValueError("Invalid model index")
@@ -84,9 +87,6 @@ def create_full_dataset():
 
 
 if __name__ == "__main__":
-    # Get the model index from command-line arguments
-    model_index = int(sys.argv[1])
-
     # Create the full dataset
     df = create_full_dataset()
 
