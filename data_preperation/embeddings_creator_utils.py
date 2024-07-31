@@ -38,12 +38,13 @@ def get_embeddings(sequences, tokenizer, model, max_length):
     Returns:
         torch.Tensor: The embeddings for the sequences.
     """
-    inputs = tokenizer(sequences, return_tensors="pt", padding='max_length', max_length=max_length)
+    inputs = tokenizer(sequences, return_tensors="pt", padding='max_length', truncation=True, max_length=max_length)
     with torch.no_grad():
         outputs = model(**inputs)
         token_embeddings = outputs.last_hidden_state
     sequence_embeddings = token_embeddings.mean(dim=1)
     return sequence_embeddings
+
 
 def read_fasta(file_path):
     """
@@ -125,6 +126,7 @@ def read_spencer_file(file_path):
                 ids_and_sequences.append((seq_id, seq))
     return ids_and_sequences
 
+
 def remove_duplicates(sequences):
     """
     Remove duplicate sequences, keeping only those with label 1 if a sequence has both label 0 and label 1.
@@ -145,6 +147,7 @@ def remove_duplicates(sequences):
                 sequence_dict[seq] = (seq_id, seq, source, label)
 
     return list(sequence_dict.values())
+
 
 def calculate_max_length(sequences):
     """
