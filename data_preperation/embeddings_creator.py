@@ -1,10 +1,12 @@
 import os
 import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import paths
 import torch
 from datetime import datetime
 from embeddings_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, read_spencer_file, \
     add_source_and_label, concatenate_sequences, save_to_csv
-import paths
+
 
 
 def create_embeddings_esm2(df, model_index):
