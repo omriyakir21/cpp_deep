@@ -4,7 +4,8 @@ import torch
 from datetime import datetime
 from embeddings_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, read_spencer_file, \
     add_source_and_label, concatenate_sequences, save_to_csv
-import path
+import paths
+
 
 def create_embeddings_esm2(df, model_index):
     """
@@ -42,8 +43,9 @@ def create_embeddings_esm2(df, model_index):
 
     # Save the embeddings to a file
     current_date = datetime.now().strftime("%d_%m")
-    output_file = os.path.join(path.esm2_embeddings_path, f'{model_name}_embedding_{current_date}.pt')
+    output_file = os.path.join(paths.esm2_embeddings_path, f'{model_name}_embedding_{current_date}.pt')
     torch.save(sequence_embeddings, output_file)
+
 
 def create_full_dataset():
     """
@@ -53,11 +55,11 @@ def create_full_dataset():
         pandas.DataFrame: DataFrame containing the full dataset.
     """
     # Read sequences from FASTA files
-    cpp_natural_sequences = read_fasta(path.cpp_natural_residues_peptides_path)
-    peptide_atlas_sequences = read_fasta(path.PeptideAtlas_path_Human_peptides_path)
+    cpp_natural_sequences = read_fasta(paths.cpp_natural_residues_peptides_path)
+    peptide_atlas_sequences = read_fasta(paths.PeptideAtlas_path_Human_peptides_path)
 
     # Read sequences from the Spencer file
-    spencer_sequences = read_spencer_file(path.SPENCER_peptides_path)
+    spencer_sequences = read_spencer_file(paths.SPENCER_peptides_path)
 
     # Add source and label
     cpp_natural_sequences = add_source_and_label(cpp_natural_sequences, 'CPP_Natural', 1)
@@ -69,10 +71,11 @@ def create_full_dataset():
 
     # Save to CSV
     current_date = datetime.now().strftime("%d_%m")
-    output_file = os.path.join(path.full_datasets_path, f'full_peptide_dataset_{current_date}.csv')
+    output_file = os.path.join(paths.full_datasets_path, f'full_peptide_dataset_{current_date}.csv')
     df = save_to_csv(full_dataset, output_file)
 
     return df
+
 
 if __name__ == "__main__":
     # Get the model index from command-line arguments
