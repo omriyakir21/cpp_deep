@@ -25,7 +25,7 @@ def load_esm2_model(model_name="facebook/esm2_t6_8M_UR50D"):
     return tokenizer, model
 
 
-def get_embeddings(sequences, tokenizer, model):
+def get_embeddings(sequences, tokenizer, model, max_length):
     """
     Get embeddings for a list of protein sequences.
 
@@ -33,12 +33,12 @@ def get_embeddings(sequences, tokenizer, model):
         sequences (list): A list of protein sequences.
         tokenizer: The tokenizer for the ESM2 model.
         model: The ESM2 model.
+        max_length (int): The maximum length for padding/truncation.
 
     Returns:
         torch.Tensor: The embeddings for the sequences.
     """
-
-    inputs = tokenizer(sequences, return_tensors="pt", padding='max_length', max_length=MAX_LENGTH)
+    inputs = tokenizer(sequences, return_tensors="pt", padding='max_length', max_length=max_length)
     with torch.no_grad():
         outputs = model(**inputs)
         token_embeddings = outputs.last_hidden_state
@@ -145,3 +145,15 @@ def remove_duplicates(sequences):
                 sequence_dict[seq] = (seq_id, seq, source, label)
 
     return list(sequence_dict.values())
+
+def calculate_max_length(sequences):
+    """
+    Calculate the maximum sequence length from a list of sequences.
+
+    Args:
+        sequences (list): A list of sequences.
+
+    Returns:
+        int: The maximum sequence length.
+    """
+    return max(len(seq) for seq in sequences)

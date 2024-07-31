@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 from datetime import datetime
 from embeddings_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, read_spencer_file, \
-    add_source_and_label, concatenate_sequences, save_to_csv,remove_duplicates
+    add_source_and_label, concatenate_sequences, save_to_csv,remove_duplicates,calculate_max_length
 
 
 
@@ -41,8 +41,12 @@ def create_embeddings_esm2(df):
     # Extract sequences from the DataFrame
     sequences = df['sequence'].tolist()
 
+    # Calculate and update MAX_LENGTH
+    MAX_LENGTH = calculate_max_length(sequences)
+    print(f'max length is {MAX_LENGTH}')
+
     # Get embeddings for the sequences
-    sequence_embeddings = get_embeddings(sequences, tokenizer, model)
+    sequence_embeddings = get_embeddings(sequences, tokenizer, model, MAX_LENGTH)
 
     # Print the shape of the embeddings
     print(sequence_embeddings.shape)
@@ -51,7 +55,6 @@ def create_embeddings_esm2(df):
     current_date = datetime.now().strftime("%d_%m")
     output_file = os.path.join(paths.esm2_embeddings_path, f'{model_name}_embedding_{current_date}.pt')
     torch.save(sequence_embeddings, output_file)
-
 
 def create_full_dataset():
     """
