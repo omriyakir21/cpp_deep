@@ -1,13 +1,22 @@
 import os
 import sys
 import torch
-import pandas as pd
+from datetime import datetime
 from embeddings_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, read_spencer_file, \
     add_source_and_label, concatenate_sequences, save_to_csv
 import path
 
+def create_embeddings_esm2(df, model_index):
+    """
+    Create embeddings for sequences in the DataFrame using the specified ESM2 model.
 
-def create_embeddings(df, model_index):
+    Args:
+        df (pandas.DataFrame): DataFrame containing sequences.
+        model_index (int): Index of the ESM2 model to use.
+
+    Raises:
+        ValueError: If model index is not provided or invalid.
+    """
     # Get the model index from command-line arguments
     if len(sys.argv) < 2:
         raise ValueError("Model index not provided. Usage: python embeddings_creator.py <model_index>")
@@ -32,13 +41,16 @@ def create_embeddings(df, model_index):
     print(sequence_embeddings.shape)
 
     # Save the embeddings to a file
-    output_file = os.path.join(path.embeddings_path, f'{model_name}_embedding.pt')
+    current_date = datetime.now().strftime("%d_%m")
+    output_file = os.path.join(path.esm2_embeddings_path, f'{model_name}_embedding_{current_date}.pt')
     torch.save(sequence_embeddings, output_file)
-
 
 def create_full_dataset():
     """
     Create a full dataset by combining sequences from multiple sources and saving them to a CSV file.
+
+    Returns:
+        pandas.DataFrame: DataFrame containing the full dataset.
     """
     # Read sequences from FASTA files
     cpp_natural_sequences = read_fasta(path.cpp_natural_residues_peptides_path)
@@ -56,13 +68,18 @@ def create_full_dataset():
     full_dataset = concatenate_sequences(cpp_natural_sequences, peptide_atlas_sequences, spencer_sequences)
 
     # Save to CSV
-    output_file = os.path.join(path.datasets_path, 'full_peptide_dataset.csv')
+    current_date = datetime.now().strftime("%d_%m")
+    output_file = os.path.join(path.full_datasets_path, f'full_peptide_dataset_{current_date}.csv')
     df = save_to_csv(full_dataset, output_file)
 
     return df
 
-
 if __name__ == "__main__":
+    # Get the model index from command-line arguments
     model_index = int(sys.argv[1])
+
+    # Create the full dataset
     df = create_full_dataset()
-    create_embeddings(df)
+
+    # Create embeddings for the sequences in the dataset
+    create_embeddings_esm2(df, model_index)
