@@ -20,10 +20,10 @@ def load_esm2_model(model_name="facebook/esm2_t6_8M_UR50D"):
         tokenizer: The tokenizer for the ESM2 model.
         model: The ESM2 model.
     """
-    print(f'Loading model {model_name}')
+    print(f'Loading model {model_name}',flush=True)
     tokenizer = EsmTokenizer.from_pretrained(model_name)
     model = EsmModel.from_pretrained(model_name)
-    print(f'Model {model_name} loaded')
+    print(f'Model {model_name} loaded',flush=True)
     return tokenizer, model
 
 
@@ -40,12 +40,12 @@ def get_embeddings(sequences, tokenizer, model, max_length):
     Returns:
         torch.Tensor: The embeddings for the sequences.
     """
-    print(f'Getting embeddings for {len(sequences)} sequences')
+    print(f'Getting embeddings for {len(sequences)} sequences',flush=True)
     inputs = tokenizer(sequences, return_tensors="pt", padding='max_length', truncation=True, max_length=max_length)
     with torch.no_grad():
-        print('Running model')
+        print('Running model',flush=True)
         outputs = model(**inputs)
-        print('Model run complete')
+        print('Model run complete',flush=True)
         token_embeddings = outputs.last_hidden_state
     sequence_embeddings = token_embeddings.mean(dim=1)
     return sequence_embeddings
