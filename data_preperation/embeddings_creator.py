@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import paths
+import pandas as pd
 import torch
 from datetime import datetime
 from embeddings_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, read_spencer_file, \
@@ -84,7 +85,11 @@ if __name__ == "__main__":
     model_index = int(sys.argv[1])
 
     # Create the full dataset
-    df = create_full_dataset()
+    # df = create_full_dataset()
 
     # Create embeddings for the sequences in the dataset
+    # Load the dataset from the CSV file
+    DATE = '31_07'
+    dataset_file_path = os.path.join(paths.full_datasets_path, f'full_peptide_dataset_{DATE}.csv')
+    df = pd.read_csv(dataset_file_path)
     create_embeddings_esm2(df, model_index)
