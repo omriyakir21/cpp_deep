@@ -6,6 +6,7 @@ from Bio import SeqIO
 # Function to load the ESM2 model and tokenizer
 esm2_model_names = ['facebook/esm2_t6_8M_UR50D', 'facebook/esm2_t12_35M_UR50D', 'facebook/esm2_t30_150M_UR50D',
                     'facebook/esm2_t33_650M_UR50D']
+MAX_LENGTH = 30
 
 
 def load_esm2_model(model_name="facebook/esm2_t6_8M_UR50D"):
@@ -23,6 +24,7 @@ def load_esm2_model(model_name="facebook/esm2_t6_8M_UR50D"):
     model = EsmModel.from_pretrained(model_name)
     return tokenizer, model
 
+
 def get_embeddings(sequences, tokenizer, model):
     """
     Get embeddings for a list of protein sequences.
@@ -35,13 +37,14 @@ def get_embeddings(sequences, tokenizer, model):
     Returns:
         torch.Tensor: The embeddings for the sequences.
     """
-    max_length = 30
-    inputs = tokenizer(sequences, return_tensors="pt", padding=max_length)
+
+    inputs = tokenizer(sequences, return_tensors="pt", padding=MAX_LENGTH, max_length=MAX_LENGTH)
     with torch.no_grad():
         outputs = model(**inputs)
         token_embeddings = outputs.last_hidden_state
     sequence_embeddings = token_embeddings.mean(dim=1)
     return sequence_embeddings
+
 
 def read_fasta(file_path):
     """
@@ -58,6 +61,7 @@ def read_fasta(file_path):
         ids_and_sequences.append((record.id, str(record.seq)))
     return ids_and_sequences
 
+
 def add_source_and_label(ids_and_sequences, source, label):
     """
     Add source and label to each sequence.
@@ -71,6 +75,7 @@ def add_source_and_label(ids_and_sequences, source, label):
         list: A list of tuples containing sequence IDs, sequences, source, and label.
     """
     return [(seq_id, seq, source, label) for seq_id, seq in ids_and_sequences]
+
 
 def concatenate_sequences(*sequence_lists):
     """
@@ -87,6 +92,7 @@ def concatenate_sequences(*sequence_lists):
         concatenated.extend(seq_list)
     return concatenated
 
+
 def save_to_csv(sequences, output_file):
     """
     Save sequences to a CSV file.
@@ -98,6 +104,7 @@ def save_to_csv(sequences, output_file):
     df = pd.DataFrame(sequences, columns=['id', 'sequence', 'source', 'label'])
     df.to_csv(output_file, index=False)
     return df
+
 
 def read_spencer_file(file_path):
     """
@@ -118,3 +125,24 @@ def read_spencer_file(file_path):
                 seq = parts[1]
                 ids_and_sequences.append((seq_id, seq))
     return ids_and_sequences
+
+def remove_duplicates(sequences):
+    """
+    Remove duplicate sequences, keeping only those with label 1 if a sequence has both label 0 and label 1.
+
+    Args:
+        sequences (list): A list of tuples containing sequence IDs, sequences, source, and label.
+
+    Returns:
+        list: A list of tuples with duplicates removed.
+    """
+    sequence_dict = {}
+    for seq_id, seq, source, label in sequences:
+        if seq not in sequence_dict:
+            sequence_dict[seq] = (seq_id, seq, source, label)
+        else:
+            # If the sequence already exists and the current label is 1, replace it
+            if label == 1:
+                sequence_dict[seq] = (seq_id, seq, source, label)
+
+    return list(sequence_dict.values())

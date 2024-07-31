@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 from datetime import datetime
 from embeddings_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, read_spencer_file, \
-    add_source_and_label, concatenate_sequences, save_to_csv
+    add_source_and_label, concatenate_sequences, save_to_csv,remove_duplicates
 
 
 
@@ -52,7 +52,7 @@ def create_embeddings_esm2(df, model_index):
 
 def create_full_dataset():
     """
-    Create a full dataset by combining sequences from multiple sources and saving them to a CSV file.
+    Create a full dataset by combining sequences from multiple sources, removing duplicates, and saving them to a CSV file.
 
     Returns:
         pandas.DataFrame: DataFrame containing the full dataset.
@@ -72,6 +72,9 @@ def create_full_dataset():
     # Concatenate sequences
     full_dataset = concatenate_sequences(cpp_natural_sequences, peptide_atlas_sequences, spencer_sequences)
 
+    # Remove duplicates
+    full_dataset = remove_duplicates(full_dataset)
+
     # Save to CSV
     current_date = datetime.now().strftime("%d_%m")
     output_file = os.path.join(paths.full_datasets_path, f'full_peptide_dataset_{current_date}.csv')
@@ -85,11 +88,11 @@ if __name__ == "__main__":
     model_index = int(sys.argv[1])
 
     # Create the full dataset
-    # df = create_full_dataset()
+    df = create_full_dataset()
 
     # Create embeddings for the sequences in the dataset
     # Load the dataset from the CSV file
-    DATE = '31_07'
-    dataset_file_path = os.path.join(paths.full_datasets_path, f'full_peptide_dataset_{DATE}.csv')
-    df = pd.read_csv(dataset_file_path)
-    create_embeddings_esm2(df, model_index)
+    # DATE = '31_07'
+    # dataset_file_path = os.path.join(paths.full_datasets_path, f'full_peptide_dataset_{DATE}.csv')
+    # df = pd.read_csv(dataset_file_path)
+    # create_embeddings_esm2(df, model_index)
