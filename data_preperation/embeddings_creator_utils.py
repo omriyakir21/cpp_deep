@@ -38,13 +38,12 @@ def get_embeddings(sequences, tokenizer, model):
         torch.Tensor: The embeddings for the sequences.
     """
 
-    inputs = tokenizer(sequences, return_tensors="pt", padding=MAX_LENGTH, max_length=MAX_LENGTH)
+    inputs = tokenizer(sequences, return_tensors="pt", padding='max_length', max_length=MAX_LENGTH)
     with torch.no_grad():
         outputs = model(**inputs)
         token_embeddings = outputs.last_hidden_state
     sequence_embeddings = token_embeddings.mean(dim=1)
     return sequence_embeddings
-
 
 def read_fasta(file_path):
     """
