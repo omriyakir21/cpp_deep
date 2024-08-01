@@ -10,7 +10,7 @@ from datetime import datetime
 
 
 
-def load_esm2_embeddings(date,model_name):
+def load_esm2_embeddings(date):
     """
     Load embeddings from a CSV file.
 
