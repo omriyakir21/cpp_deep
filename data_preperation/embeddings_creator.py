@@ -92,11 +92,11 @@ def create_full_dataset():
 
 if __name__ == "__main__":
     # Create the full dataset
-    df = create_full_dataset()
+    # df = create_full_dataset()
 
     # Create embeddings for the sequences in the dataset
     # Load the dataset from the CSV file
-    # DATE = '31_07'
-    # dataset_file_path = os.path.join(paths.full_datasets_path, f'full_peptide_dataset_{DATE}.csv')
-    # df = pd.read_csv(dataset_file_path)
-    # create_embeddings_esm2(df)
+    DATE = '01_08'
+    dataset_file_path = os.path.join(paths.full_datasets_path, f'full_peptide_dataset_{DATE}.csv')
+    df = pd.read_csv(dataset_file_path)
+    create_embeddings_esm2(df)
