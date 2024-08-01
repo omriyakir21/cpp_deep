@@ -22,3 +22,5 @@ esm2_embeddings_path = os.path.join(embeddings_path, 'esm2')
 models_path = os.path.join(current_dir, 'models')
 # results
 results_path = os.path.join(current_dir, 'results')
+data_analysis_path = os.path.join(results_path, 'data_analysis')
+data_analysis_plots_path = os.path.join(data_analysis_path, 'plots')
