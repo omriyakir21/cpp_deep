@@ -39,7 +39,7 @@ def load_labels(date):
         DATE (str): date of the labels file.
 
     Returns:
-        list: A tuple containing labels of the sequences
+        ndarray: ndarray containing labels of the sequences
     """
     df = pd.read_csv(os.path.join(paths.full_datasets_path, f'full_dataset_{date}.csv'))
 
