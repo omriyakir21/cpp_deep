@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..\\..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
 from embeddings_analysis_utils import plot_tsne, load_esm2_embeddings, load_labels
 from data_preperation.embeddings_creator_utils import esm2_model_names
