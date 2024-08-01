@@ -48,6 +48,23 @@ def load_labels(date):
     return labels
 
 
+def load_sequences(date):
+    """
+    Load labels from a CSV file.
+
+    Args:
+        DATE (str): date of the labels file.
+
+    Returns:
+        ndarray: ndarray containing labels of the sequences
+    """
+    df = pd.read_csv(os.path.join(paths.full_datasets_path, f'{FULL_DATASET_NAME}_{date}.csv'))
+
+    labels = np.array(df['sequence'].tolist())
+
+    return labels
+
+
 def plot_tsne(embeddings, labels, model_name, save_dir, title='t-SNE plot of embeddings'):
     """
     Plot t-SNE of embeddings and save the plot.
@@ -76,6 +93,53 @@ def plot_tsne(embeddings, labels, model_name, save_dir, title='t-SNE plot of emb
     # Save the plot
     current_date = datetime.now().strftime('%d_%m')
     plot_filename = f'tsne_plot_{model_name.split("/")[1]}_{current_date}.png'
+    plot_path = os.path.join(save_dir, plot_filename)
+    plt.savefig(plot_path)
+    plt.close()
+
+
+# Add this function to `embeddings_analysis_utils.py`
+def calculate_sequence_lengths(sequences):
+    """
+    Calculate the lengths of sequences.
+
+    Args:
+        sequences (list): List of sequences.
+
+    Returns:
+        list: List of sequence lengths.
+    """
+    return [len(seq) for seq in sequences]
+
+
+# Add this function to `embeddings_analysis_utils.py`
+def save_sequence_length_histogram(sequences, labels, save_dir, title='Histogram of Sequence Lengths'):
+    """
+    Plot histogram of sequence lengths for labels 0 and 1.
+
+    Args:
+        sequences (list): List of sequences.
+        labels (numpy.ndarray): Labels corresponding to the sequences.
+        save_dir (str): Directory where the plot will be saved.
+        title (str): Title of the plot.
+    """
+    lengths = calculate_sequence_lengths(sequences)
+
+    lengths_label_0 = [lengths[i] for i in range(len(labels)) if labels[i] == 0]
+    lengths_label_1 = [lengths[i] for i in range(len(labels)) if labels[i] == 1]
+
+    plt.figure(figsize=(10, 8))
+    plt.hist(lengths_label_0, bins=30, alpha=0.5, label='Label 0', color='blue')
+    plt.hist(lengths_label_1, bins=30, alpha=0.5, label='Label 1', color='orange')
+
+    plt.title(title)
+    plt.xlabel('Sequence Length')
+    plt.ylabel('Frequency')
+    plt.legend()
+
+    # Save the plot
+    current_date = datetime.now().strftime('%d_%m')
+    plot_filename = f'sequence_length_histogram_{current_date}.png'
     plot_path = os.path.join(save_dir, plot_filename)
     plt.savefig(plot_path)
     plt.close()

@@ -98,6 +98,6 @@ if __name__ == "__main__":
     # Create embeddings for the sequences in the dataset
     # Load the dataset from the CSV file
     DATE = '01_08'
-    dataset_file_path = os.path.join(paths.full_datasets_path, f'full_peptide_dataset_{DATE}.csv')
+    dataset_file_path = os.path.join(paths.full_datasets_path, f'{FULL_DATASET_NAME}_{DATE}.csv')
     df = pd.read_csv(dataset_file_path)
     create_embeddings_esm2(df)
