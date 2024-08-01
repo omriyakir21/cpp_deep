@@ -41,7 +41,7 @@ def load_labels(date):
     Returns:
         ndarray: ndarray containing labels of the sequences
     """
-    df = pd.read_csv(os.path.join(paths.full_datasets_path, f'full_dataset_{date}.csv'))
+    df = pd.read_csv(os.path.join(paths.full_datasets_path, f'full_peptide_dataset_{date}.csv'))
 
     labels = np.array(df['label'].tolist())
 
