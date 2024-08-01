@@ -4,4 +4,4 @@ pandas
 biopython
 Bio
 matplotlib
-sklearn
+scikit-learn
