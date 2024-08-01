@@ -72,11 +72,12 @@ def create_full_dataset():
 
     # Add source and label
     cpp_natural_sequences = add_source_and_label(cpp_natural_sequences, 'CPP_Natural', 1)
-    peptide_atlas_sequences = add_source_and_label(peptide_atlas_sequences, 'PeptideAtlas', 0)
+    # peptide_atlas_sequences = add_source_and_label(peptide_atlas_sequences, 'PeptideAtlas', 0)
     spencer_sequences = add_source_and_label(spencer_sequences, 'Spencer', 0)
 
     # Concatenate sequences
-    full_dataset = concatenate_sequences(cpp_natural_sequences, peptide_atlas_sequences, spencer_sequences)
+    # full_dataset = concatenate_sequences(cpp_natural_sequences, peptide_atlas_sequences, spencer_sequences)
+    full_dataset = concatenate_sequences(cpp_natural_sequences, spencer_sequences)
 
     # Remove duplicates
     full_dataset = remove_duplicates(full_dataset)
