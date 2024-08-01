@@ -1,13 +1,13 @@
 import os
 import sys
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import paths
 import pandas as pd
 import torch
 from datetime import datetime
 from embeddings_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, read_spencer_file, \
-    add_source_and_label, concatenate_sequences, save_to_csv,remove_duplicates,calculate_max_length
-
+    add_source_and_label, concatenate_sequences, save_to_csv, remove_duplicates, calculate_max_length,FULL_DATASET_NAME
 
 
 def create_embeddings_esm2(df):
@@ -56,6 +56,7 @@ def create_embeddings_esm2(df):
     output_file = os.path.join(paths.esm2_embeddings_path, f'{model_name.split("/")[1]}_embedding_{current_date}.pt')
     torch.save(sequence_embeddings, output_file)
 
+
 def create_full_dataset():
     """
     Create a full dataset by combining sequences from multiple sources, removing duplicates, and saving them to a CSV file.
@@ -84,7 +85,7 @@ def create_full_dataset():
 
     # Save to CSV
     current_date = datetime.now().strftime("%d_%m")
-    output_file = os.path.join(paths.full_datasets_path, f'full_peptide_dataset_{current_date}.csv')
+    output_file = os.path.join(paths.full_datasets_path, f'{FULL_DATASET_NAME}{current_date}.csv')
     df = save_to_csv(full_dataset, output_file)
 
     return df

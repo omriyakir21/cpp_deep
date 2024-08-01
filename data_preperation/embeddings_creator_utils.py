@@ -7,6 +7,7 @@ from Bio import SeqIO
 esm2_model_names = ['facebook/esm2_t6_8M_UR50D', 'facebook/esm2_t12_35M_UR50D', 'facebook/esm2_t30_150M_UR50D',
                     'facebook/esm2_t33_650M_UR50D']
 MAX_LENGTH = 30
+FULL_DATASET_NAME = 'full_peptide_dataset'
 
 
 def load_esm2_model(model_name="facebook/esm2_t6_8M_UR50D"):
@@ -20,10 +21,10 @@ def load_esm2_model(model_name="facebook/esm2_t6_8M_UR50D"):
         tokenizer: The tokenizer for the ESM2 model.
         model: The ESM2 model.
     """
-    print(f'Loading model {model_name}',flush=True)
+    print(f'Loading model {model_name}', flush=True)
     tokenizer = EsmTokenizer.from_pretrained(model_name)
     model = EsmModel.from_pretrained(model_name)
-    print(f'Model {model_name} loaded',flush=True)
+    print(f'Model {model_name} loaded', flush=True)
     return tokenizer, model
 
 
@@ -40,12 +41,12 @@ def get_embeddings(sequences, tokenizer, model, max_length):
     Returns:
         torch.Tensor: The embeddings for the sequences.
     """
-    print(f'Getting embeddings for {len(sequences)} sequences',flush=True)
+    print(f'Getting embeddings for {len(sequences)} sequences', flush=True)
     inputs = tokenizer(sequences, return_tensors="pt", padding='max_length', truncation=True, max_length=max_length)
     with torch.no_grad():
-        print('Running model',flush=True)
+        print('Running model', flush=True)
         outputs = model(**inputs)
-        print('Model run complete',flush=True)
+        print('Model run complete', flush=True)
         token_embeddings = outputs.last_hidden_state
     sequence_embeddings = token_embeddings.mean(dim=1)
     return sequence_embeddings
@@ -165,3 +166,7 @@ def calculate_max_length(sequences):
         int: The maximum sequence length.
     """
     return max(len(seq) for seq in sequences)
+
+
+
+

@@ -1,16 +1,16 @@
 import pandas as pd
 import sys
 import os
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 import torch
 import paths
-from data_preperation.embeddings_creator_utils import esm2_model_names
+from data_preperation.embeddings_creator_utils import esm2_model_names, FULL_DATASET_NAME
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 import numpy as np
 import os
 from datetime import datetime
-
 
 
 def load_esm2_embeddings(date):
@@ -41,7 +41,7 @@ def load_labels(date):
     Returns:
         ndarray: ndarray containing labels of the sequences
     """
-    df = pd.read_csv(os.path.join(paths.full_datasets_path, f'full_peptide_dataset_{date}.csv'))
+    df = pd.read_csv(os.path.join(paths.full_datasets_path, f'{FULL_DATASET_NAME}_{date}.csv'))
 
     labels = np.array(df['label'].tolist())
 
