@@ -53,7 +53,7 @@ def create_embeddings_esm2(df):
 
     # Save the embeddings to a file
     current_date = datetime.now().strftime("%d_%m")
-    output_file = os.path.join(paths.esm2_embeddings_path, f'{model_name}_embedding_{current_date}.pt')
+    output_file = os.path.join(paths.esm2_embeddings_path, f'{"/".split(model_name)[1]}_embedding_{current_date}.pt')
     torch.save(sequence_embeddings, output_file)
 
 def create_full_dataset():
