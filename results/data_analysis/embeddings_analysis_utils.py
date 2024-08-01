@@ -65,14 +65,14 @@ def plot_tsne(embeddings, labels, model_name, save_dir, title='t-SNE plot of emb
         indices = labels == label
         plt.scatter(embeddings_2d[indices, 0], embeddings_2d[indices, 1], label=f'Label {label}', alpha=0.5)
 
-    plt.title(f'{title} - {model_name}')
+    plt.title(f'{title} - {model_name.split("/")[1]}')
     plt.xlabel(f't-SNE component 1')
     plt.ylabel('t-SNE component 2')
     plt.legend()
 
     # Save the plot
     current_date = datetime.now().strftime('%d_%m')
-    plot_filename = f'tsne_plot_{model_name}_{current_date}.png'
+    plot_filename = f'tsne_plot_{model_name.split("/")[1]}_{current_date}.png'
     plot_path = os.path.join(save_dir, plot_filename)
     plt.savefig(plot_path)
     plt.close()
