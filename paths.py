@@ -17,6 +17,7 @@ PeptideAtlas_path_Human_path = os.path.join(PeptideAtlas_path, 'Human')
 PeptideAtlas_path_Human_peptides_path = os.path.join(PeptideAtlas_path_Human_path, 'APD_Hs_all.fasta')
 embeddings_path = os.path.join(datasets_path, 'embeddings')
 esm2_embeddings_path = os.path.join(embeddings_path, 'esm2')
+cross_validation_path = os.path.join(datasets_path, 'cross_validation')
 
 # models
 models_path = os.path.join(current_dir, 'models')

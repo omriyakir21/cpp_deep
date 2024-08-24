@@ -6,7 +6,7 @@ import paths
 import pandas as pd
 import torch
 from datetime import datetime
-from embeddings_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, read_spencer_file, \
+from data_preperation.dataset_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, read_spencer_file, \
     add_source_and_label, concatenate_sequences, save_to_csv, remove_duplicates, calculate_max_length,FULL_DATASET_NAME
 
 
