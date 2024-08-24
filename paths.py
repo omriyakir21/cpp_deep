@@ -6,6 +6,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 # datasets paths
 datasets_path = os.path.join(current_dir, 'datasets')
 datasets_sources_path = os.path.join(datasets_path, 'sources')
+data_for_training_path = os.path.join(datasets_path, 'data_for_training')
 full_datasets_path = os.path.join(datasets_path, 'full_datasets')
 BIOPEP_UWMix_path = os.path.join(datasets_sources_path, 'BIOPEP_UWMix')
 cpp_natural_residues_path = os.path.join(datasets_sources_path, 'cpp_natural_residues')
@@ -17,7 +18,6 @@ PeptideAtlas_path_Human_path = os.path.join(PeptideAtlas_path, 'Human')
 PeptideAtlas_path_Human_peptides_path = os.path.join(PeptideAtlas_path_Human_path, 'APD_Hs_all.fasta')
 embeddings_path = os.path.join(datasets_path, 'embeddings')
 esm2_embeddings_path = os.path.join(embeddings_path, 'esm2')
-cross_validation_path = os.path.join(datasets_path, 'cross_validation')
 
 # models
 models_path = os.path.join(current_dir, 'models')
@@ -25,3 +25,12 @@ models_path = os.path.join(current_dir, 'models')
 results_path = os.path.join(current_dir, 'results')
 data_analysis_path = os.path.join(results_path, 'data_analysis')
 data_analysis_plots_path = os.path.join(data_analysis_path, 'plots')
+
+# tmp
+tmp_path = os.path.join(current_dir, 'tmp')
+
+# mafft exec
+mafft_exec_path = '/home/iscb/wolfson/omriyakir/anaconda3/envs/ubinet/bin/mafft'
+
+# mmseqs exec
+mmseqs_exec_path = '/home/iscb/wolfson/omriyakir/anaconda3/envs/ubinet/bin/mmseqs'
