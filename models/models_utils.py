@@ -1,7 +1,7 @@
 import os
 from torch.utils.data import DataLoader
 from transformers import EsmTokenizer, EsmModel
-from data_preperation.embeddings_creator_utils import load_esm2_model, get_embeddings, read_fasta
+from data_preperation.dataset_creator_utils import load_esm2_model, get_embeddings, read_fasta
 import path
 
 class ProteinEmbeddingsDataset(Dataset):
