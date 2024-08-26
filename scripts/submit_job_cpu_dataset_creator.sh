@@ -7,4 +7,4 @@
 #SBATCH --ntasks=1 # number of processes
 #SBATCH --mem=32000 # CPU memory (MB)
 #SBATCH --cpus-per-task=8 # CPU cores per process
-python3 data_preperation/embeddings_creator.py
+python3 data_preperation/dataset_creator.py

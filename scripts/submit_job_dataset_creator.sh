@@ -9,4 +9,4 @@
 #SBATCH --gpus=1 # GPU cores per process
 #SBATCH --cpus-per-task=8 # CPU cores per process
 #SBATCH --constraint="tesla_v100|quadro_rtx_8000|geforce_rtx_3090|a100|a5000|a6000"
-python3 ~/cpp_deep/data_preperation/embeddings_creator.py $1
+python3 ~/cpp_deep/data_preperation/dataset_creator.py $1
