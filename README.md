@@ -2,8 +2,45 @@
 
 ## Work distribution
 ### Beck
-Use fg
+Use Setfit model to train esm2.
+https://huggingface.co/docs/setfit/main/en/index
+1. Train only the classifier.
+2. Train esm2 weights as well.
+SetFit is an efficient and prompt-free framework for few-shot fine-tuning of Sentence Transformers.
+To my understanding, the training with setfit function is done by contrastive learning.
 
+Here’s a general outline of how few-shot fine-tuning works:
+
+1. Pre-training: Start with a model that has been pre-trained on a large, diverse dataset. This could be a language model like GPT or a vision model like ResNet.
+
+2. Task Definition: Define the specific task you want the model to perform. This might be a classification task, a regression task, or something else.
+
+3. Few-Shot Data: Prepare a small dataset with a few examples for each class or category. This dataset is used to fine-tune the pre-trained model.
+
+4. Fine-Tuning: Train the model on the few-shot dataset. During this phase, the model adjusts its weights based on the new data while retaining the general knowledge it acquired during pre-training.
+
+### Aya
+Use LoRA algorithm to fine tune esm2.
+LoRA (Low-Rank Adaptation) is a method for fine-tuning pre-trained models efficiently by focusing on adapting a subset of model parameters. It’s particularly useful for large models where full fine-tuning might be computationally expensive or impractical.
+https://huggingface.co/docs/diffusers/en/training/lora
+
+Paper that used LoRA for protein language models.
+https://www.biorxiv.org/content/biorxiv/early/2024/06/07/2023.12.13.571462.full.pdf
+
+
+### Navit
+Fine tune ProGen2 in a way you choose.
+Github repository with the pre-trained models:
+https://github.com/salesforce/progen/tree/main/progen2
+
+The models are autoregressive transformers with next-token prediction language modeling as the learning objective (like chat-gpt). 
+
+Link to the paper:
+https://arxiv.org/pdf/2206.13517
+
+### Omri
+1. Improve data set, either by getting an existing one or by curating one from scratch.
+2. Create baselines.
 
 ## Datasets Construction
 
