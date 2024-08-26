@@ -1,5 +1,10 @@
 # cpp_deep
 
+## Work distribution
+### Beck
+Use 
+
+
 ## Datasets Construction
 
 ### Positive Samples
