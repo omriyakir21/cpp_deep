@@ -7,5 +7,5 @@
 #SBATCH --ntasks=1 # number of processes
 #SBATCH --mem=32000 # CPU memory (MB)
 #SBATCH --cpus-per-task=8 # CPU cores per process
-python aggragateScoringMLP.py
+python3 aggragateScoringMLP.py
 
