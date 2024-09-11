@@ -42,6 +42,12 @@ https://arxiv.org/pdf/2206.13517
 1. Improve data set, either by getting an existing one or by curating one from scratch.
 2. Create baselines.
 
+## meeting 28_8
+1. Git
+2. Slurm
+3. work distribution
+4. report
+
 ## Datasets Construction
 
 ### Positive Samples
