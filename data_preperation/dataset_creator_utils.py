@@ -1,7 +1,13 @@
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from transformers import EsmTokenizer, EsmModel
 import torch
 import pandas as pd
 from Bio import SeqIO
+from bs4 import BeautifulSoup
+import re
+
 
 # Function to load the ESM2 model and tokenizer
 esm2_model_names = ['facebook/esm2_t6_8M_UR50D', 'facebook/esm2_t12_35M_UR50D', 'facebook/esm2_t30_150M_UR50D',
@@ -9,6 +15,27 @@ esm2_model_names = ['facebook/esm2_t6_8M_UR50D', 'facebook/esm2_t12_35M_UR50D', 
 MAX_LENGTH = 30
 FULL_DATASET_NAME = 'full_peptide_dataset'
 
+
+def read_BIOPEP_file(file_path):
+    
+    with open(file_path, 'r', encoding='iso-8859-1') as file:
+        content = file.read()
+    
+    soup = BeautifulSoup(content, 'html.parser')
+    
+    ids_and_sequences = []
+    
+    # Find all rows in the table
+    rows = soup.find_all('tr', class_='info')
+    row_num = 0
+    for row in rows:
+        # Extract the sequence ID and sequence
+        seq_id = f'{str(row_num)}_BIOPEP'
+        row_num += 1
+        seq = row.find('div', class_='info').get_text(strip=True)
+        if seq and not (seq.isspace() or seq == 'NA') and re.match(r'^[A-Z]+$', seq):
+            ids_and_sequences.append((seq_id, seq))    
+    return ids_and_sequences
 
 def load_esm2_model(model_name="facebook/esm2_t6_8M_UR50D"):
     """
