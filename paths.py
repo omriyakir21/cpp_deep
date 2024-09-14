@@ -21,8 +21,18 @@ esm2_embeddings_path = os.path.join(embeddings_path, 'esm2')
 
 # models
 models_path = os.path.join(current_dir, 'models')
+#   baselines
+baselines_models_path = os.path.join(models_path, 'baselines')
+#       convolution_baseline
+convolution_baseline_models_path = os.path.join(baselines_models_path, 'convolution_baseline')
+
+
 # results
 results_path = os.path.join(current_dir, 'results')
+#   baselines
+baselines_results_path = os.path.join(results_path, 'baselines')
+#       convolution_baseline
+convolution_baseline_results_path = os.path.join(baselines_results_path, 'convolution_baseline')
 data_analysis_path = os.path.join(results_path, 'data_analysis')
 data_analysis_plots_path = os.path.join(data_analysis_path, 'plots')
 
