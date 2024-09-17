@@ -16,6 +16,7 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 from sklearn.utils.class_weight import compute_class_weight
+from torch.utils.data import DataLoader, TensorDataset
 
 def save_best_models(best_models,grid_results,best_architecture_index,models_folder):
     # Save the best models
@@ -62,6 +63,11 @@ def train_architecture_over_folds(filter,kernel_size,num_layers,batch_size,epoch
         y_train = torch.tensor(fold_train_dict['labels_train'], dtype=torch.float32).to(device)
         X_val = torch.tensor(process_sequences(fold_train_dict['sequences_validation']), dtype=torch.float32).transpose(1, 2).to(device)
         y_val = torch.tensor(fold_train_dict['labels_validation'], dtype=torch.float32).to(device)
+
+        train_dataset = TensorDataset(X_train, y_train)
+        val_dataset = TensorDataset(X_val, y_val)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size)
         
         class_weights = compute_class_weight('balanced', classes=np.unique(y_train.cpu().numpy()), y=y_train.cpu().numpy())
         class_weights = torch.FloatTensor(class_weights).to(device)
@@ -72,7 +78,7 @@ def train_architecture_over_folds(filter,kernel_size,num_layers,batch_size,epoch
         optimizer = optim.Adam(model.parameters(), lr=0.001)
 
         def train_step(engine, batch):
-            print('train_step')
+            # print('train_step')
             model.train()
             optimizer.zero_grad()
             X_batch, y_batch = batch
@@ -99,11 +105,13 @@ def train_architecture_over_folds(filter,kernel_size,num_layers,batch_size,epoch
         def calculate_pr_auc_engine(engine):
             model.eval()
             print(f'Epoch {engine.state.epoch} - loss: {engine.state.output:.2f}')
-            evaluator.run([(X_val, y_val)])
+            # evaluator.run([(X_val, y_val)])
+            evaluator.run(val_loader)
 
         handler = EarlyStopping(patience=5, score_function=score_function, trainer = trainer)
         evaluator.add_event_handler(Events.EPOCH_COMPLETED, handler)
-        trainer.run([(X_train, y_train)], max_epochs=epochs)
+        # trainer.run([(X_train, y_train)], max_epochs=epochs)
+        trainer.run(train_loader, max_epochs=epochs)
                         
         # Calculate prAUC
         model.eval()
@@ -113,7 +121,7 @@ def train_architecture_over_folds(filter,kernel_size,num_layers,batch_size,epoch
         architecture_pr_aucs.append(val_pr_auc)
         architecture_models.append(model)
 
-        return architecture_pr_aucs,architecture_models
+    return architecture_pr_aucs,architecture_models
 
 if __name__ == '__main__':
     DATE = '13_09'
