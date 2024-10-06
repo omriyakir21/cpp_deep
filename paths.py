@@ -21,6 +21,16 @@ esm2_embeddings_path = os.path.join(embeddings_path, 'esm2')
 
 # models
 models_path = os.path.join(current_dir, 'models')
+#   esm2
+esm2_models_path = os.path.join(models_path, 'esm2')
+#       few shot learning
+few_shot_learning_models_path = os.path.join(esm2_models_path, 'few_shot_learning')
+#       lora
+lora_models_path = os.path.join(esm2_models_path, 'lora')
+#       fine_tune
+fine_tune_models_path = os.path.join(esm2_models_path, 'fine_tune')
+#   progen2
+progen2_models_path = os.path.join(models_path, 'progen2')
 #   baselines
 baselines_models_path = os.path.join(models_path, 'baselines')
 #       convolution_baseline
@@ -29,6 +39,14 @@ convolution_baseline_models_path = os.path.join(baselines_models_path, 'convolut
 
 # results
 results_path = os.path.join(current_dir, 'results')
+#   esm2
+esm2_results_path = os.path.join(results_path, 'esm2')
+#       fine_tune
+fine_tune_results_path = os.path.join(esm2_results_path, 'fine_tune')
+#       few shot learning
+few_shot_learning_results_path = os.path.join(esm2_results_path, 'few_shot_learning')
+#       lora
+lora_results_path = os.path.join(esm2_results_path, 'lora')
 #   baselines
 baselines_results_path = os.path.join(results_path, 'baselines')
 #       convolution_baseline
