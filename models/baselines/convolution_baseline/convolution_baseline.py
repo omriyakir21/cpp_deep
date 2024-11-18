@@ -4,7 +4,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..','..','..'))
 import paths
 from models.baselines.convolution_baseline.convolution_baseline_utils import process_sequences,CNNModel \
     ,score_function,calculate_pr_auc
-from utils import load_as_pickle
+from utils import load_as_pickle,plot_pr_curve
 import numpy as np
 import torch
 import pandas as pd
@@ -43,6 +43,8 @@ def save_test_pr_auc(best_models,folds_traning_dicts,results_folder):
         all_test_labels.append(y_test.cpu().numpy())
     all_test_outputs = np.concatenate(all_test_outputs)
     all_test_labels = np.concatenate(all_test_labels)
+    np.save(os.path.join(results_folder, 'all_test_outputs.npy'), all_test_outputs)
+    np.save(os.path.join(results_folder, 'all_test_labels.npy'), all_test_labels)
     # Plot the precision-recall curve
     plot_pr_curve(all_test_labels, all_test_outputs, save_path=os.path.join(results_folder, 'pr_curve_model.png'), title='Convolution Baseline Precision-Recall Curve')
 
@@ -67,7 +69,7 @@ def train_architecture_over_folds(filter,kernel_size,num_layers,batch_size,epoch
         train_dataset = TensorDataset(X_train, y_train)
         val_dataset = TensorDataset(X_val, y_val)
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        val_loader = DataLoader(val_dataset, batch_size=batch_size)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size,shuffle = True)
         
         class_weights = compute_class_weight('balanced', classes=np.unique(y_train.cpu().numpy()), y=y_train.cpu().numpy())
         class_weights = torch.FloatTensor(class_weights).to(device)
@@ -105,12 +107,10 @@ def train_architecture_over_folds(filter,kernel_size,num_layers,batch_size,epoch
         def calculate_pr_auc_engine(engine):
             model.eval()
             print(f'Epoch {engine.state.epoch} - loss: {engine.state.output:.2f}')
-            # evaluator.run([(X_val, y_val)])
             evaluator.run(val_loader)
 
         handler = EarlyStopping(patience=5, score_function=score_function, trainer = trainer)
         evaluator.add_event_handler(Events.EPOCH_COMPLETED, handler)
-        # trainer.run([(X_train, y_train)], max_epochs=epochs)
         trainer.run(train_loader, max_epochs=epochs)
                         
         # Calculate prAUC
