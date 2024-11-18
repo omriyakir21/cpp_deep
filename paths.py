@@ -53,6 +53,7 @@ baselines_results_path = os.path.join(results_path, 'baselines')
 convolution_baseline_results_path = os.path.join(baselines_results_path, 'convolution_baseline')
 data_analysis_path = os.path.join(results_path, 'data_analysis')
 data_analysis_plots_path = os.path.join(data_analysis_path, 'plots')
+result_analysis_path = os.path.join(results_path, 'result_analysis')
 
 # tmp
 tmp_path = os.path.join(current_dir, 'tmp')
