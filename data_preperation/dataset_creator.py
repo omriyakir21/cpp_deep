@@ -6,8 +6,9 @@ import paths
 import pandas as pd
 import torch
 from datetime import datetime
-from data_preperation.dataset_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, read_spencer_file, \
-    add_source_and_label, concatenate_sequences, save_to_csv, remove_duplicates, calculate_max_length,FULL_DATASET_NAME,read_BIOPEP_file
+from data_preperation.dataset_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, \
+    add_source_and_label, concatenate_sequences, save_to_csv, remove_duplicates, \
+    calculate_max_length,FULL_DATASET_NAME,read_BIOPEP_file, remove_long_sequences
 
 
 def create_embeddings_esm2(df,DATE):
@@ -89,9 +90,12 @@ def create_full_dataset():
     # Remove duplicates
     full_dataset = remove_duplicates(full_dataset)
 
+    full_dataset = remove_long_sequences(full_dataset)
+    
     # Save to CSV
     current_date = datetime.now().strftime("%d_%m")
     output_file = os.path.join(paths.full_datasets_path, f'{FULL_DATASET_NAME}_{current_date}.csv')
+
     df = save_to_csv(full_dataset, output_file)
 
     return df
@@ -100,12 +104,12 @@ def create_full_dataset():
 if __name__ == "__main__":
     # Create the full dataset
     # df = create_full_dataset()
-
+    DATE = datetime.now().strftime("%d_%m")
     # Create embeddings for the sequences in the dataset
     # Load the dataset from the CSV file
-    DATE = '10_09'
+    # DATE = '10_09'
     dataset_file_path = os.path.join(paths.full_datasets_path, f'{FULL_DATASET_NAME}_{DATE}.csv')
-    df = pd.read_csv(dataset_file_path,na_values = [])
+    df = pd.read_csv(dataset_file_path)
 
     create_embeddings_esm2(df,DATE)
  

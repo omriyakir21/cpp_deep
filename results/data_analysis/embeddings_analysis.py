@@ -23,7 +23,7 @@ def save_tsne_plots_all_models(date,data_set_name):
 
 # add if main
 if __name__ == '__main__':
-    DATE = '10_09'
+    DATE = '13_09'
     FULL_DATASET_NAME = 'full_peptide_dataset'
     save_tsne_plots_all_models(DATE,FULL_DATASET_NAME)
 

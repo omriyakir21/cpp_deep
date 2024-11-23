@@ -159,6 +159,15 @@ def read_spencer_file(file_path):
                 ids_and_sequences.append((seq_id, seq))
     return ids_and_sequences
 
+def remove_long_sequences(sequences):
+    """
+    Args:
+        sequences (list): A list of tuples containing sequence IDs, sequences, source, and label.
+    
+    Returns:
+        list: A list of tuples with sequences longer than 50 amino acids removed.
+    """
+    return [seq for seq in sequences if len(seq[1]) <= 50]
 
 def remove_duplicates(sequences):
     """
