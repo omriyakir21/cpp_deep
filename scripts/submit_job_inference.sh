@@ -8,4 +8,4 @@
 #SBATCH --mem=32000 # CPU memory (MB)
 #SBATCH --gpus=1 # GPU cores per process
 #SBATCH --cpus-per-task=8 # CPU cores per process
-python3 /home/iscb/wolfson/omriyakir/cpp_deep/models/esm2/fine_tune/fine_tune.py
+python3 /home/iscb/wolfson/omriyakir/cpp_deep/results/result_analysis/inference.py

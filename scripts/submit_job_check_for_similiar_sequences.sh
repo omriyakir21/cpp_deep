@@ -8,4 +8,5 @@
 #SBATCH --mem=32000 # CPU memory (MB)
 #SBATCH --gpus=1 # GPU cores per process
 #SBATCH --cpus-per-task=8 # CPU cores per process
-python3 /home/iscb/wolfson/omriyakir/cpp_deep/models/esm2/fine_tune/fine_tune.py
+#SBATCH --constraint="tesla_v100|quadro_rtx_8000|geforce_rtx_3090|a100|a5000|a6000"
+python3 /home/iscb/wolfson/omriyakir/cpp_deep/results/data_analysis/check_for_similiar_in_train_set.py

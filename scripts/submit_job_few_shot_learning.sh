@@ -9,4 +9,4 @@
 #SBATCH --gpus=1 # GPU cores per process
 #SBATCH --cpus-per-task=8 # CPU cores per process
 #SBATCH --constraint="tesla_v100|quadro_rtx_8000|geforce_rtx_3090|a100|a5000|a6000|h100"
-python3 /home/iscb/wolfson/omriyakir/cpp_deep/models/esm2/few_shot_learning.py
+python3 /home/iscb/wolfson/omriyakir/cpp_deep/models/esm2/few_shot_learning/few_shot_learning.py
