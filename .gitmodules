@@ -1,0 +1,9 @@
+[submodule "models/csm_toxin/csm_toxin"]
+	path = models/csm_toxin/csm_toxin
+	url = https://bitbucket.org/ascherslab/csm-toxin.git
+[submodule "models/csm_toxin/protein_bert"]
+	path = models/csm_toxin/protein_bert
+	url = https://github.com/nadavbra/protein_bert.git
+[submodule "models/toxinpred2/toxinpred2"]
+	path = models/toxinpred2/toxinpred2
+	url = https://github.com/raghavagps/toxinpred2.git
