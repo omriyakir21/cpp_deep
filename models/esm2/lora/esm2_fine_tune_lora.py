@@ -3,51 +3,22 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..','..','..'))
 import paths
 import torch
-from transformers import TrainingArguments, EsmForSequenceClassification, Trainer,EsmTokenizer
+from transformers import TrainingArguments, EsmForSequenceClassification, Trainer,EsmTokenizer,AutoConfig
 from peft import LoraConfig, get_peft_model,PeftModel,TaskType
-from utils import load_as_pickle, plot_pr_curve
+from utils import load_as_pickle, plot_pr_curve, plot_roc_curve
 from sklearn.utils.class_weight import compute_class_weight
 from models.baselines.convolution_baseline.convolution_baseline import save_grid_search_results
 import numpy as np
 import re
 from transformers.trainer_callback import EarlyStoppingCallback
-from models.esm2.fine_tune.fine_tune import WeightedTrainer,create_dataset,calculate_class_weights,device
 import pandas as pd
 from matplotlib import pyplot as plt
-from models.esm2.ems2_utils import precision_recall_auc
+from models.esm2.ems2_utils import precision_recall_auc,metrics_evaluation,WeightedTrainer
 from datasets import Dataset
 from sklearn.metrics import precision_recall_curve, auc
 
 # Custom WeightedTrainer
-class WeightedTrainer(Trainer):
-    def __init__(self, class_weights, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.class_weights = class_weights.to(self.args.device)
 
-    @staticmethod
-    def calculate_class_weights(labels):
-        # Ensure labels is a PyTorch tensor
-        if not isinstance(labels, torch.Tensor):
-            labels = torch.tensor(labels)
-        # Calculate the number of positives and negatives
-        num_negatives = torch.sum(labels == 0).item()  # Count zeros in the tensor
-        num_positives = torch.sum(labels == 1).item()  # Count ones in the tensor
-        # Compute class weight ratio
-        ratio = num_negatives / num_positives
-        class_weights = torch.tensor([ratio], dtype=torch.float32)
-
-        return class_weights
-    
-    def compute_loss(self, model, inputs, return_outputs=False):
-        labels = inputs.pop("labels").float()
-        outputs = model(**inputs)
-        logits = outputs.get("logits").squeeze(dim=-1)
-
-        # Apply class weights to BCEWithLogitsLoss
-        loss_fct = torch.nn.BCEWithLogitsLoss(pos_weight=self.class_weights)
-        loss = loss_fct(logits, labels)
-
-        return (loss, outputs) if return_outputs else loss
 
 # Define early stopping callback
 early_stopping_callback = EarlyStoppingCallback(
@@ -55,13 +26,14 @@ early_stopping_callback = EarlyStoppingCallback(
     early_stopping_threshold=0.0,  # Minimum change to consider as improvement
 )
 
-def save_best_models(models, grid_results, best_architecture_index, models_folder):
+def save_best_models(models, grid_results, best_architecture_index, models_folder,roc_metric):
     # Save the best models
+    roc_metric_addition = "_roc_metric" if roc_metric else ""
     best_lora_alpha = str(grid_results[best_architecture_index]['lora_alpha'])
     best_num_epochs = grid_results[best_architecture_index]['num_epochs']
     best_r = grid_results[best_architecture_index]['r']
     best_batch_size = grid_results[best_architecture_index]['batch_size']
-    architecture_model_folder = os.path.join(models_folder, f'architecture_{best_batch_size}_{best_num_epochs}_{best_r}_{best_lora_alpha}')
+    architecture_model_folder = os.path.join(models_folder, f'architecture_{best_batch_size}_{best_num_epochs}_{best_r}_{best_lora_alpha}{roc_metric_addition}')
     if not os.path.exists(architecture_model_folder):
         os.makedirs(architecture_model_folder)
     for i in range(len(models)):
@@ -70,11 +42,12 @@ def save_best_models(models, grid_results, best_architecture_index, models_folde
                                                 f'model_{best_batch_size}_{best_num_epochs}_{best_r}_{best_lora_alpha}_{i+1}'))
     return architecture_model_folder
 
-def save_test_pr_auc2(architecture_test_prediction_outputs,results_folder,title):
+def save_test_metric(architecture_test_prediction_outputs,results_folder,title,folds_training_dicts):
     all_test_outputs = []
     all_test_labels = []
     for i in range(len(architecture_test_prediction_outputs)):
         predictions = architecture_test_prediction_outputs[i].predictions
+        predictions = 1 / (1 + np.exp(-predictions.squeeze()))
         labels = architecture_test_prediction_outputs[i].label_ids
         all_test_outputs.append(predictions)
         all_test_labels.append(labels)
@@ -83,21 +56,27 @@ def save_test_pr_auc2(architecture_test_prediction_outputs,results_folder,title)
     all_test_outputs = np.concatenate(all_test_outputs)
     all_test_labels = np.concatenate(all_test_labels)
     test_pr_auc = precision_recall_auc(all_test_labels,all_test_outputs)
-    save_path = os.path.join(results_folder, 'pr_curve_model_2.png')
-    print(f'save_path : {save_path}')
+    pr_curve_save_path = os.path.join(results_folder, 'pr_curve_model.png')
+    roc_curve_save_path = os.path.join(results_folder, 'roc_curve_model.png')
+    print(f'pr curve save path: {pr_curve_save_path}')
+    print(f'roc curve save path: {roc_curve_save_path}')
     np.save(os.path.join(results_folder, 'all_test_outputs.npy'), all_test_outputs)
     np.save(os.path.join(results_folder, 'all_test_labels.npy'), all_test_labels)
-    plot_pr_curve(all_test_labels, all_test_outputs, save_path=save_path, title=title)
+    plot_pr_curve(all_test_labels, all_test_outputs, save_path=pr_curve_save_path, title=f'{title} PR Curve')
+    plot_roc_curve(all_test_labels, all_test_outputs, save_path=roc_curve_save_path, title=f'{title} ROC Curve')
+    sequences = []
+    for fold_dict in folds_training_dicts:
+        sequences.extend(fold_dict['sequences_test'])
 
-# Custom evaluation metric
-def precision_recall_auc_for_eval(eval_pred):
-    predictions, labels = eval_pred
-    y_pred = 1 / (1 + np.exp(-predictions.squeeze()))
-    y_true = labels
+    df = pd.DataFrame({
+        'sequence': sequences,
+        'prediction': all_test_outputs,
+        'label': all_test_labels
+    })
 
-    precision, recall, _ = precision_recall_curve(y_true, y_pred)
-    pr_auc = auc(recall, precision)
-    return {"pr_auc": pr_auc}
+    csv_path = os.path.join(results_folder, 'predictions_labels_sequences.csv')
+    df.to_csv(csv_path, index=False)
+    print(f'Saved predictions, labels, and sequences to {csv_path}')
 
 # Tokenize datasets
 def tokenize_function(tokenizer,sequences, labels):
@@ -105,7 +84,7 @@ def tokenize_function(tokenizer,sequences, labels):
     tokens["labels"] = labels
     return tokens
 
-def train_architecture_over_folds(batch_size, num_epochs,r,lora_alpha, folds_training_dicts,model_name):
+def train_architecture_over_folds(batch_size, num_epochs,r,lora_alpha, folds_training_dicts,model_name,fine_tune_untrained):
 
     architecture_pr_aucs = []
     models = []
@@ -134,9 +113,13 @@ def train_architecture_over_folds(batch_size, num_epochs,r,lora_alpha, folds_tra
         train_dataset.set_format("torch")
         val_dataset.set_format("torch")
         test_dataset.set_format("torch")
-
-        # Initialize ESM2 model
-        model = EsmForSequenceClassification.from_pretrained(model_name, num_labels=1)
+        
+        if fine_tune_untrained:
+            config = AutoConfig.from_pretrained(model_name)
+            config.num_labels = 1
+            model = EsmForSequenceClassification(config)
+        else:
+            model = EsmForSequenceClassification.from_pretrained(model_name, num_labels=1)
         target_modules = []
         for name, _ in model.named_modules():
             if re.match(r"esm\.encoder\.layer\.\d+\.attention\.self\.query", name) or re.match(r"esm\.encoder\.layer\.\d+\.attention\.self\.value", name):
@@ -171,7 +154,7 @@ def train_architecture_over_folds(batch_size, num_epochs,r,lora_alpha, folds_tra
             eval_strategy="epoch",
             save_strategy="epoch",
             load_best_model_at_end=True,
-            metric_for_best_model="pr_auc",
+            metric_for_best_model="roc_auc",
             logging_dir=os.path.join(checkpoint_folder, 'logs'),
             logging_steps=10,
             report_to="none",
@@ -186,7 +169,7 @@ def train_architecture_over_folds(batch_size, num_epochs,r,lora_alpha, folds_tra
             eval_dataset=val_dataset,
             tokenizer=tokenizer,
             callbacks=[early_stopping_callback],
-            compute_metrics= precision_recall_auc_for_eval
+            compute_metrics= metrics_evaluation
         )        
         # Training arguments
         
@@ -195,7 +178,7 @@ def train_architecture_over_folds(batch_size, num_epochs,r,lora_alpha, folds_tra
         trainer.train()
         models.append(trainer.model)
         architecture_pr_aucs.append(trainer.state.best_metric)
-        print(f"Fold {fold_index + 1} done, best PR AUC: {trainer.state.best_metric:.4f}")
+        print(f"Fold {fold_index + 1} done, best metric score: {trainer.state.best_metric:.4f}")
         trainers.append(trainer)
         predictions_output = trainer.predict(test_dataset)
         test_prediction_outputs.append(predictions_output)
@@ -205,14 +188,26 @@ def train_architecture_over_folds(batch_size, num_epochs,r,lora_alpha, folds_tra
 
 
 if __name__ == "__main__":
-    DATE = '13_09'
+    DATE = '11_01'
+    roc_metric = True
+    fine_tune_untrained = False
+    fine_tune_untrained_addition = "_untrained" if fine_tune_untrained else ""
+    my_pretrained = False
+    from_scratch = False
+    date_for_pretrained = '2025-02-14' if from_scratch else '2025-02-20'
+    from_scratch_addition = "_from_scratch" if from_scratch else ""
     folds_traning_dicts = load_as_pickle(os.path.join(paths.data_for_training_path, DATE, 'folds_traning_dicts.pkl'))
+    esm2_model_name = 'facebook/esm2_t6_8M_UR50D' 
+    model_path = os.path.join(paths.esm2_peptide_pretrained_models_path,f'peptide_{esm2_model_name.split("/")[-1]}{from_scratch_addition}_{date_for_pretrained}')
+    model_name = model_path if my_pretrained else esm2_model_name
+    
     param_grid = {
-        'model_name': ['facebook/esm2_t30_150M_UR50D'],
+        
         'batch_size': [128,256,512],
         'num_epochs': [50],
         'r': [25,50,100],
-        'lora_alpha': [16,32],  
+        'lora_alpha': [16,32], 
+        'model_name': [model_name] 
     }
 
     best_model = None
@@ -236,17 +231,12 @@ if __name__ == "__main__":
         results_folder = os.path.join(paths.lora_results_path, DATE, model_name.split('/')[-1])
         if not os.path.exists(results_folder):
             os.makedirs(results_folder)
-        best_model = None
-        best_architecture_pr_auc = 0
-        best_architecture_index = 0
-        grid_results = []
-        cnt = 0
     
         for batch_size in param_grid['batch_size']:
             for num_epochs in param_grid['num_epochs']:
                 for r in param_grid['r']:
                     for lora_alpha in param_grid['lora_alpha']:
-                        architecture_pr_aucs, architecture_models,architecture_test_prediction_outputs,trainers = train_architecture_over_folds(batch_size, num_epochs,r,lora_alpha, folds_traning_dicts,model_name)
+                        architecture_pr_aucs, architecture_models,architecture_test_prediction_outputs,trainers = train_architecture_over_folds(batch_size, num_epochs,r,lora_alpha, folds_traning_dicts,model_name,fine_tune_untrained)
                         architecture_pr_auc = np.mean(architecture_pr_aucs)
                         # Save the grid search results
                         grid_results.append({
@@ -254,7 +244,7 @@ if __name__ == "__main__":
                             'num_epochs': num_epochs,
                             'r': r,
                             'lora_alpha': lora_alpha,
-                            'val_pr_auc': architecture_pr_auc
+                            'val_metric': architecture_pr_auc
                         })
 
                         # Save the best models
@@ -268,8 +258,8 @@ if __name__ == "__main__":
 
     
 
-    architecture_model_folder = save_best_models(best_models, grid_results, best_architecture_index, models_folder)
+    architecture_model_folder = save_best_models(best_models, grid_results, best_architecture_index, models_folder,roc_metric)
     architecture_results_folder = os.path.join(results_folder, architecture_model_folder.split('/')[-1])
     os.makedirs(architecture_results_folder, exist_ok=True)
     save_grid_search_results(grid_results, architecture_results_folder)
-    save_test_pr_auc2(best_architecture_test_prediction_outputs,architecture_results_folder,'esm2 fine tune LoRA precision-recall AUC')
+    save_test_metric(best_architecture_test_prediction_outputs,architecture_results_folder,'esm2 fine tune LoRA',folds_traning_dicts)
