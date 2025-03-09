@@ -13,7 +13,7 @@ from models.esm2.ems2_utils import precision_recall_auc
 from utils import plot_pr_curve, load_as_pickle
 from sklearn.metrics import accuracy_score, recall_score, f1_score, matthews_corrcoef
 import matplotlib.pyplot as plt
-from models.esm2.fine_tune.predict_fine_tune import load_datasets, predict_with_models
+from models.esm2.fine_tune.predict_fine_tune import load_datasets, predict_with_models,predict_over_test_set
 from datasets import Dataset
 import json
 
@@ -84,7 +84,7 @@ def predict_and_concatenate(folds_training_dicts, models, tokenizers, max_length
     for fold_index, fold_dict in enumerate(folds_training_dicts):
         test_sequences = fold_dict['sequences_test']   # Your list of test sequences
         test_labels = fold_dict['labels_test']     # Your list of test labels
-        tokenizer = tokenizers[fold_index % len(tokenizers)]
+        tokenizer = tokenizers[fold_index]
         test_dataset = Dataset.from_dict(tokenize_function(tokenizer,test_sequences, test_labels))
         test_dataset.set_format("torch")
         dataloader = DataLoader(test_dataset, batch_size=32)
@@ -109,12 +109,13 @@ def predict_and_concatenate(folds_training_dicts, models, tokenizers, max_length
         raise ValueError("No predictions were generated for any folds.")
 
     concatenated_predictions = np.concatenate(all_predictions)
+    concatenated_predictions = 1 / (1 + np.exp(-concatenated_predictions))
     concatenated_labels = np.array(all_labels)
 
     print(f"Total predictions: {len(concatenated_predictions)}, Total labels: {len(concatenated_labels)}")
     return concatenated_predictions, concatenated_labels
 
-if __name__ == '__main__':
+def main():
     best_batch_size, best_num_epochs, best_r, best_lora_alpha = 128, 50, 100, 32
     model_dir = paths.lora_models_path
     result_dir = paths.lora_results_path
@@ -193,3 +194,29 @@ if __name__ == '__main__':
     metrics_save_path = os.path.join(results_folder, 'lora_performance_metrics.png')
     plt.savefig(metrics_save_path)
     plt.close()
+
+
+if __name__ == '__main__':
+    # main()
+    best_batch_size, best_num_epochs, best_r, best_lora_alpha = 128, 50, 100, 32
+    model_dir = paths.lora_models_path
+    result_dir = paths.lora_results_path
+    DATE = '13_09'
+    model_name = 'esm2_t6_8M_UR50D'
+    models_folder = os.path.join(model_dir, DATE, model_name.split('/')[-1])
+    results_folder = os.path.join(result_dir, DATE, model_name.split('/')[-1])    
+    models = load_best_models(best_lora_alpha, best_r, best_batch_size, best_num_epochs, models_folder, model_name)
+    tokenizers = [EsmTokenizer.from_pretrained('facebook/esm2_t6_8M_UR50D') for _ in range(5)]
+    folds_traning_dicts = load_as_pickle(os.path.join(paths.data_for_training_path, DATE, 'folds_traning_dicts.pkl'))
+    concatenated_predictions, concatenated_labels = predict_and_concatenate(folds_traning_dicts, models, tokenizers)
+    print(f'concatenated_predictions {concatenated_predictions.shape}')
+    save_path = os.path.join(results_folder, 'pr_curve_model_lora_inference.png')
+    title = 'Precision-Recall Curve lora inference'
+    # plot_pr_curve(concatenated_labels, concatenated_predictions, save_path=save_path, title=title)
+    predictions = np.load("/home/iscb/wolfson/omriyakir/cpp_deep/results/esm2/lora/13_09/esm2_t6_8M_UR50D/architecture_128_50_100_32/all_test_outputs.npy")
+    predictions = 1 / (1 + np.exp(-predictions))
+    predictions = predictions.squeeze()
+    print(f'predictions {predictions.shape}')
+    gap = concatenated_predictions - predictions
+    for i,g in enumerate(gap):
+        print(f'gap {i} {g}')

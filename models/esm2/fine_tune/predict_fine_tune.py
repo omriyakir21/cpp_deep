@@ -206,5 +206,49 @@ def main():
     metrics = evaluate_predictions(predictions, concatenated_labels, results_folder, model_name)
     print(f"Metrics saved to {os.path.join(results_folder, 'metrics_fine_tune.json')}")
 
+def predict_over_test_set(folds_training_dicts, models, tokenizers,save_path,title, max_length=50):
+    all_predictions = []
+    all_labels = []
+    for i in range (len(folds_training_dicts)):
+        fold = folds_training_dicts[i]
+        model = models[i]
+        tokenizer = tokenizers[i]
+        sequences_test = fold['sequences_test']
+        labels_test = fold['labels_test']
+        dataset = create_dataset(sequences_test, labels_test, tokenizer, max_length=max_length)
+        dataloader = DataLoader(dataset, batch_size=len(dataset))
+
+        for batch in dataloader:
+            inputs = {k: v.to(model.device) for k, v in batch.items() if k != 'labels'}
+            with torch.no_grad():
+                outputs = model(**inputs)
+            logits = outputs.logits.squeeze().cpu().numpy()
+            predictions = 1 / (1 + np.exp(-logits))
+            all_predictions.append(predictions)
+            all_labels.append(batch['labels'].cpu().numpy())
+    
+    all_predictions = np.concatenate(all_predictions)
+    all_labels = np.concatenate(all_labels)
+    print(f'all predictions{all_predictions}')
+    plot_pr_curve(all_labels, all_predictions, save_path=save_path, title=title)
+
+    
+
 if __name__ == '__main__':
-    main()
+    # main()
+    model_dir = paths.fine_tune_models_path
+    result_dir = paths.fine_tune_results_path
+    DATE = '13_09'
+    model_name = 'esm2_t6_8M_UR50D'
+    models_folder = os.path.join(model_dir, DATE, model_name.split('/')[-1])
+    results_folder = os.path.join(result_dir, DATE, model_name.split('/')[-1])
+    best_num_epochs = '100'
+    best_batch_size = '256'
+    architecture = f'{best_num_epochs}_{best_batch_size}'
+    architecture_model_folder = os.path.join(models_folder, f'architecture_{architecture}')
+    folds_training_dicts = load_as_pickle(os.path.join(paths.data_for_training_path, DATE, 'folds_traning_dicts.pkl'))
+    
+    models, tokenizers = load_models_and_tokenizers(architecture_model_folder, architecture)
+    save_path = os.path.join(results_folder, 'pr_curve_model_fine_tune_inference.png')
+    title = 'Precision-Recall Curve fine tune inference'
+    predict_over_test_set(folds_training_dicts, models, tokenizers, results_folder,save_path, title)

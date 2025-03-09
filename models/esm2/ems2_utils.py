@@ -4,11 +4,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..','..'))
 import paths
 import torch
 import numpy as np
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer,Trainer
 from torch.utils.data import Dataset
 from datasets import Dataset as HFDataset
 import pandas as pd
-from sklearn.metrics import precision_recall_curve, auc
+from sklearn.metrics import precision_recall_curve, auc, roc_curve
 from utils import plot_pr_curve
 
 class CustomDataset(Dataset):
@@ -40,6 +40,10 @@ class CustomDataset(Dataset):
         return HFDataset.from_dict(data_dict)
 
 
+def calculate_roc_auc(y_true, y_pred):
+    fpr, tpr, _ = roc_curve(y_true, y_pred)
+    return auc(fpr, tpr)
+
 def precision_recall_auc(y_true, y_pred):
     precision, recall, _ = precision_recall_curve(y_true, y_pred)
     return auc(recall, precision)
@@ -57,6 +61,16 @@ def compute_metrics(eval_pred):
     print(f' precision_recall_auc: {pr_auc}')
     return {"precision_recall_auc": pr_auc}
 
+# Custom evaluation metric
+def metrics_evaluation(eval_pred):
+    predictions, labels = eval_pred
+    y_pred = 1 / (1 + np.exp(-predictions.squeeze()))
+    y_true = labels
+
+    precision, recall, _ = precision_recall_curve(y_true, y_pred)
+    pr_auc = auc(recall, precision)
+    roc_auc = calculate_roc_auc(y_true, y_pred)
+    return {"pr_auc": pr_auc, "roc_auc": roc_auc}
 
 def save_test_pr_auc(best_models,folds_traning_dicts,results_folder,tokenizer_name,title):
     # Evaluate the best model on the test set
@@ -80,3 +94,32 @@ def save_test_pr_auc(best_models,folds_traning_dicts,results_folder,tokenizer_na
     # Plot the precision-recall curve
     plot_pr_curve(all_test_labels, all_test_outputs, save_path=os.path.join(results_folder, 'pr_curve_model.png'), title=title)
 
+class WeightedTrainer(Trainer):
+    def __init__(self, class_weights, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.class_weights = class_weights.to(self.args.device)
+
+    @staticmethod
+    def calculate_class_weights(labels):
+        # Ensure labels is a PyTorch tensor
+        if not isinstance(labels, torch.Tensor):
+            labels = torch.tensor(labels)
+        # Calculate the number of positives and negatives
+        num_negatives = torch.sum(labels == 0).item()  # Count zeros in the tensor
+        num_positives = torch.sum(labels == 1).item()  # Count ones in the tensor
+        # Compute class weight ratio
+        ratio = num_negatives / num_positives
+        class_weights = torch.tensor([ratio], dtype=torch.float32)
+
+        return class_weights
+    
+    def compute_loss(self, model, inputs, return_outputs=False,num_items_in_batch=None):
+        labels = inputs.pop("labels").float()
+        outputs = model(**inputs)
+        logits = outputs.get("logits").squeeze(dim=-1)
+
+        # Apply class weights to BCEWithLogitsLoss
+        loss_fct = torch.nn.BCEWithLogitsLoss(pos_weight=self.class_weights)
+        loss = loss_fct(logits, labels)
+
+        return (loss, outputs) if return_outputs else loss
