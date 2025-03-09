@@ -8,8 +8,10 @@ import torch
 from datetime import datetime
 from data_preperation.dataset_creator_utils import load_esm2_model, get_embeddings, esm2_model_names, read_fasta, \
     add_source_and_label, concatenate_sequences, save_to_csv, remove_duplicates, \
-    calculate_max_length,FULL_DATASET_NAME,read_BIOPEP_file, remove_long_sequences
-
+    calculate_max_length,FULL_DATASET_NAME,read_BIOPEP_file, remove_long_sequences \
+        ,save_sequences_descriptions_BIOPEP_to_csv,read_Hmrbase2_files,read_NeuroPep_file \
+        ,read_SmProt2
+        
 
 def create_embeddings_esm2(df,DATE):
     """
@@ -60,7 +62,7 @@ def create_embeddings_esm2(df,DATE):
     torch.save(sequence_embeddings, output_file)
 
 
-def create_full_dataset():
+def create_full_dataset(date):
     """
     Create a full dataset by combining sequences from multiple sources, removing duplicates, and saving them to a CSV file.
 
@@ -75,17 +77,22 @@ def create_full_dataset():
     # spencer_sequences = read_spencer_file(paths.SPENCER_peptides_path)
 
     # Read sequences from the BIOPRP file
-    BIOPEP_ids_and_sequences = read_BIOPEP_file(os.path.join(paths.BIOPEP_UWMix_path, 'BIOPEP_UWMix.html'))
-
+    BIOPEP_ids_sequences_descriptions = read_BIOPEP_file(os.path.join(paths.BIOPEP_UWMix_path, 'BIOPEP_UWMix.html'))
+    Hmbrase2_id_sequences_descriptions = read_Hmrbase2_files(paths.Hmrbase2_path)
+    neuropep1_ids_sequences_descriptions = read_NeuroPep_file(os.path.join(paths.NeuroPep1_path,"NeuroPep1.txt"))
+    SmProt2_id_sequences_descriptions = read_SmProt2(paths.SmProt2_path)
     # Add source and label
     cpp_natural_ids_and_sequences = add_source_and_label(cpp_natural_ids_and_sequences, 'CPP_Natural', 1)
-    BIOPEP_ids_and_sequences = add_source_and_label(BIOPEP_ids_and_sequences,'BIOPEP_UWMix',0)
+    BIOPEP_ids_sequences_descriptions = add_source_and_label(BIOPEP_ids_sequences_descriptions,'BIOPEP_UWMix',0)
+    Hmbrase2_id_sequences_descriptions = add_source_and_label(Hmbrase2_id_sequences_descriptions, 'Hmrbase2', 0)
+    neuropep1_ids_sequences_descriptions = add_source_and_label(neuropep1_ids_sequences_descriptions, 'NeuroPep1', 0)
+    SmProt2_id_sequences_descriptions = add_source_and_label(SmProt2_id_sequences_descriptions, 'SmProt2', 0)
     # # peptide_atlas_sequences = add_source_and_label(peptide_atlas_sequences, 'PeptideAtlas', 0)
     # spencer_sequences = add_source_and_label(spencer_sequences, 'Spencer', 0)
 
     # Concatenate sequences
     # full_dataset = concatenate_sequences(cpp_natural_sequences, peptide_atlas_sequences, spencer_sequences)
-    full_dataset = concatenate_sequences(cpp_natural_ids_and_sequences, BIOPEP_ids_and_sequences)
+    full_dataset = concatenate_sequences(cpp_natural_ids_and_sequences, BIOPEP_ids_sequences_descriptions, Hmbrase2_id_sequences_descriptions,neuropep1_ids_sequences_descriptions,SmProt2_id_sequences_descriptions)
 
     # Remove duplicates
     full_dataset = remove_duplicates(full_dataset)
@@ -93,8 +100,7 @@ def create_full_dataset():
     full_dataset = remove_long_sequences(full_dataset)
     
     # Save to CSV
-    current_date = datetime.now().strftime("%d_%m")
-    output_file = os.path.join(paths.full_datasets_path, f'{FULL_DATASET_NAME}_{current_date}.csv')
+    output_file = os.path.join(paths.full_datasets_path, f'{FULL_DATASET_NAME}_{date}.csv')
 
     df = save_to_csv(full_dataset, output_file)
 
@@ -103,13 +109,16 @@ def create_full_dataset():
 
 if __name__ == "__main__":
     # Create the full dataset
-    # df = create_full_dataset()
     DATE = datetime.now().strftime("%d_%m")
+    DATE = '13_02'
+    df = create_full_dataset(DATE)
+    
     # Create embeddings for the sequences in the dataset
     # Load the dataset from the CSV file
-    # DATE = '10_09'
+    
     dataset_file_path = os.path.join(paths.full_datasets_path, f'{FULL_DATASET_NAME}_{DATE}.csv')
     df = pd.read_csv(dataset_file_path)
 
-    create_embeddings_esm2(df,DATE)
- 
+    # create_embeddings_esm2(df,DATE)
+    # csv_path = os.path.join(paths.BIOPEP_UWMix_path, 'BIOPEP_sequences_descriptions.csv')
+    # save_sequences_descriptions_BIOPEP_to_csv(csv_path)

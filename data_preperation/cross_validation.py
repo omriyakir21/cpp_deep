@@ -8,7 +8,7 @@ from data_preperation.dataset_creator_utils import FULL_DATASET_NAME
 from cross_validation_utils import partition_to_folds_and_save
 
 if __name__ == '__main__':
-    DATE = '13_09'
+    DATE = '13_02'
     THRESHOLD = 0.5
     K = 5
     # sequence_embeddings = load_esm2_embeddings(DATE)

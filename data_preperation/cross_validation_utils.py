@@ -8,7 +8,7 @@ import numpy as np
 import subprocess
 import pandas as pd
 import paths
-from utils import save_as_pickle, load_as_pickle, load_labels, load_sequences, load_ids
+from utils import save_as_pickle, load_as_pickle, load_labels, load_sequences, load_ids,load_descriptions
 
 
 def cluster_sequences(list_sequences, seqid=1.0, coverage=0.8, covmode='0', path2mmseqstmp=paths.tmp_path,path2mmseqs=paths.mmseqs_exec_path):
@@ -24,6 +24,7 @@ def cluster_sequences(list_sequences, seqid=1.0, coverage=0.8, covmode='0', path
     command = ('{mmseqs} easy-cluster {fasta} {result} {tmp} --min-seq-id %s -c %s --cov-mode %s' % (
         seqid, coverage, covmode)).format(mmseqs=path2mmseqs, fasta=tmp_input, result=tmp_output, tmp=path2mmseqstmp)
     subprocess.run(command.split(' '))
+    print(f'command = {command}')
 
     with open(tmp_output + '_rep_seq.fasta', 'r') as f:
         representative_indices = [int(x[1:-1]) for x in f.readlines()[::2]]
@@ -75,7 +76,7 @@ def get_ids_indices_for_groups(clusters_participants_list, sublists, fold_num):
         ids_indices.append(fold_indices)
     return np.concatenate(ids_indices)
 
-def create_training_folds(groups_indices, sequences,labels,ids):
+def create_training_folds(groups_indices, sequences,labels,ids,descriptions):
     folds_training_dicts = []
     for i in range(5):
         training_dict = {}
@@ -94,6 +95,9 @@ def create_training_folds(groups_indices, sequences,labels,ids):
         training_dict['ids_train'] = [ids[j] for j in training_indices]
         training_dict['ids_validation'] = [ids[j] for j in validation_indices]
         training_dict['ids_test'] = [ids[j] for j in test_indices]
+        training_dict['descriptions_train'] = [descriptions[j] for j in training_indices]
+        training_dict['descriptions_validation'] = [descriptions[j] for j in validation_indices]
+        training_dict['descriptions_test'] = [descriptions[j] for j in test_indices]
  
         folds_training_dicts.append(training_dict)
     return folds_training_dicts
@@ -102,6 +106,7 @@ def partition_to_folds_and_save(date,data_set_name):
     labels = load_labels(date,data_set_name)
     ids = load_ids(date,data_set_name)
     sequences = load_sequences(date,data_set_name)
+    descriptions = load_descriptions(date,data_set_name)
     data_for_training_dir = os.path.join(paths.data_for_training_path, date)
     if not os.path.exists(data_for_training_dir):
         os.makedirs(data_for_training_dir)
@@ -121,7 +126,7 @@ def partition_to_folds_and_save(date,data_set_name):
     save_as_pickle(groups_indices, os.path.join(data_for_training_dir, 'groups_indices.pkl'))
  
         # CREATE TRAINING DICTS
-    folds_training_dicts = create_training_folds(groups_indices,sequences,labels,ids)
+    folds_training_dicts = create_training_folds(groups_indices,sequences,labels,ids,descriptions)
                                                    
     save_as_pickle(folds_training_dicts,os.path.join(data_for_training_dir,'folds_traning_dicts.pkl'))
 
